@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCookies } from 'react-cookie';
+import axios from 'axios';
 // Components
 import Item from './Cart/Item/Item';
 import Cart from './Cart/Cart';
@@ -10,13 +11,12 @@ import Grid from '@material-ui/core/Grid';
 import AddShoppingCartIcon from '@material-ui/icons/AddShoppingCart';
 import RestoreIcon from '@material-ui/icons/Restore';
 import Badge from '@material-ui/core/Badge';
-// Styles
-import { Wrapper, StyledButton, StyledAppBar, HeaderTypography } from './App.styles';
 import { Dialog, Toolbar, Typography } from '@material-ui/core';
 import DialogItem from './Dialog/DialogItem/DialogItem';
-import axios from 'axios';
-import { calculateCartTotalAmount, calculateCartTotalPrice, createUuid } from './helpers/helpers';
 import PurchasesList from './Purchases/PurchasesList/PurchasesList';
+import { calculateCartTotalAmount, calculateCartTotalPrice, createUuid } from './helpers/helpers';
+// Styles
+import { Wrapper, StyledButton, StyledAppBar, HeaderTypography } from './App.styles';
 // Types
 export type CartItemType = {
   id: number;
@@ -64,15 +64,13 @@ const App = () => {
 
   useEffect(() => {
     fetchCheesesMutation();
-    getUserId();
+    const userId = cookies.ID;
+    if (!userId) {
+      console.log('Reset userId');
+      const userId = createUuid();
+      setCookie('ID', userId, { path: '/' });
+    }
   }, []);
-
-  const getUserId = () => {
-    const userId = cookies.ID || createUuid();
-    setCookie('ID', userId, { path: '/' });
-    return userId;
-  };
-
   const { data: cheeses, mutate: fetchCheesesMutation } = useMutation(
     getCheeses, {
     onMutate: () => {
@@ -158,7 +156,7 @@ const App = () => {
     // Refactor cart Items into purchase type
     const purchase: PurchaseType = {
       id: createUuid(),
-      userId: getUserId(),
+      userId: cookies.ID,
       totalPrice: calculateCartTotalPrice(cartItems),
       totalItems: calculateCartTotalAmount(cartItems),
       dateTime: new Date().toDateString(),
@@ -171,7 +169,7 @@ const App = () => {
   }
 
   const handlePurchasesOpen = () => {
-    fetchPurchasesMutation(getUserId());
+    fetchPurchasesMutation(cookies.ID);
     setPurchasesOpen(true);
   }
 
