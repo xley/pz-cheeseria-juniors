@@ -12,10 +12,11 @@ import RestoreIcon from '@material-ui/icons/Restore';
 import Badge from '@material-ui/core/Badge';
 // Styles
 import { Wrapper, StyledButton, StyledAppBar, HeaderTypography } from './App.styles';
-import { AppBar, Dialog, Toolbar, Typography } from '@material-ui/core';
+import { Dialog, Toolbar, Typography } from '@material-ui/core';
 import DialogItem from './Dialog/DialogItem/DialogItem';
 import axios from 'axios';
 import { calculateCartTotalAmount, calculateCartTotalPrice, createUuid } from './helpers/helpers';
+import PurchasesList from './Purchases/PurchasesList/PurchasesList';
 // Types
 export type CartItemType = {
   id: number;
@@ -46,6 +47,11 @@ const createPurchase = async (purchase: PurchaseType) => {
   return response;
 };
 
+const fetchPurchases = async (userId: string): Promise<PurchaseType[]> => {
+  const { data: response } = await axios.get(`/api/purchases/${userId}`);
+  return response;
+};
+
 const App = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState([] as CartItemType[]);
@@ -54,6 +60,7 @@ const App = () => {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cookies, setCookie] = useCookies(['user']);
+  const [purchasesOpen, setPurchasesOpen] = useState(false);
 
   useEffect(() => {
     fetchCheesesMutation();
@@ -82,6 +89,20 @@ const App = () => {
 
   const createPurchaseMutation = useMutation(
     createPurchase, {
+    onMutate: () => {
+      setLoading(true);
+    },
+    onSuccess: () => {
+      setLoading(false);
+    },
+    onError: () => {
+      setLoading(false);
+      setError(true);
+    }
+  });
+
+  const { data: purchases, mutate: fetchPurchasesMutation } = useMutation(
+    fetchPurchases, {
     onMutate: () => {
       setLoading(true);
     },
@@ -149,6 +170,15 @@ const App = () => {
     setCartItems([] as CartItemType[]);
   }
 
+  const handlePurchasesOpen = () => {
+    fetchPurchasesMutation(getUserId());
+    setPurchasesOpen(true);
+  }
+
+  const handlePurchasesClose = () => {
+    setPurchasesOpen(false);
+  }
+
   if (loading) return <LinearProgress />;
   if (error) return <div>Something went wrong ...</div>;
 
@@ -163,7 +193,7 @@ const App = () => {
             justify="space-between"
             alignItems="center"
           >
-            <StyledButton>
+            <StyledButton onClick={() => handlePurchasesOpen()}>
               <RestoreIcon />
               <Typography variant="subtitle2">
                 Recent Purchases
@@ -190,6 +220,10 @@ const App = () => {
           </Grid>
         </Toolbar>
       </StyledAppBar>
+
+      <Drawer anchor='left' onClose={handlePurchasesClose} open={purchasesOpen}>
+        <PurchasesList items={purchases} />
+      </Drawer>
 
       <Drawer anchor='right' open={cartOpen} onClose={() => setCartOpen(false)}>
         <Cart

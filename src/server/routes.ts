@@ -1,12 +1,19 @@
 import * as express from 'express';
+import * as _ from "lodash";
 const fs = require('fs');
 const cheeses = require('./data/cheeses.json');
+const purchases = require('./data/purchases.json');
 
 const router = express.Router();
 
 router.get('/api/cheeses', (req, res, next) => {
 
     res.json(cheeses);
+});
+
+router.get('/api/purchases/:userId', (req, res) => {
+    const usersPurchases = _.filter(purchases, { "userId": req.params.userId });
+    res.json(usersPurchases);
 });
 
 router.post('/api/purchase', (req, res) => {

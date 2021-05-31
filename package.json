@@ -14,6 +14,7 @@
     "@types/styled-components": "^5.1.7",
     "axios": "^0.21.1",
     "express": "^4.17.1",
+    "lodash": "^4.17.21",
     "open-browser-plugin": "^1.1.1",
     "react": "^17.0.1",
     "react-cookie": "^4.0.3",
